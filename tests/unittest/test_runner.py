@@ -3,6 +3,7 @@ from loguru import logger
 from hfb.runner import get_runner, register_runner, Context
 from hfb.runner.factory import ApacheBench, BaseBenchmarkStrategy
 from hfb.strategy import BaseBenchmarkResultStrategy
+from hfb.strategy import BaseServerRunnerStrategy
 
 
 class CustomStrategy(BaseBenchmarkStrategy):
@@ -13,6 +14,17 @@ class CustomStrategy(BaseBenchmarkStrategy):
         pass
 
     def result(self, *args, **kwargs) -> BaseBenchmarkResultStrategy:
+        pass
+
+
+class PyRunner(BaseServerRunnerStrategy):
+    def _enter(self):
+        return self
+
+    def _exit(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def run(self, *args, **kwargs):
         pass
 
 
@@ -40,15 +52,16 @@ class TestContext:
 
     def test_strategy_classmethod(self):
         register_runner(CustomStrategy)
-        with Context.strategy("CustomStrategy", server="sanic") as context:
-            assert isinstance(context._runner, CustomStrategy)
-            assert context._runner.server == "sanic"
+        register_runner(PyRunner)
+        with Context.strategy("CustomStrategy", "PyRunner", server="sanic") as context:
+            assert isinstance(context._benchmark_runner, CustomStrategy)
+            assert context._benchmark_runner.server == "sanic"
 
     def test_strategy_with_init(self):
         strategy = CustomStrategy(server="sanic")
-        with Context(strategy) as context:
-            assert isinstance(context._runner, CustomStrategy)
-            assert context._runner.server == "sanic"
+        with Context(strategy, get_runner("PyRunner", server="sanic")) as context:
+            assert isinstance(context._benchmark_runner, CustomStrategy)
+            assert context._benchmark_runner.server == "sanic"
 
     def test_context_runner(self):
         call_count = {
@@ -80,7 +93,7 @@ class TestContext:
 
         register_runner(TestStrategy)
 
-        with Context.strategy('TestStrategy', server="sanic") as context:
+        with Context.strategy('TestStrategy', 'PyRunner', server="sanic") as context:
             context.benchmark()
             context.report()
 

@@ -1,28 +1,33 @@
-from hfb.strategy import BaseBenchmarkStrategy
+from hfb.strategy import BaseBenchmarkStrategy, BaseServerRunnerStrategy
 import hfb.runner.factory
 from inspect import getmembers
 
 
 class Context:
-    def __init__(self, runner: BaseBenchmarkStrategy):
-        self._runner = runner
+    def __init__(self, benchmark_runner: BaseBenchmarkStrategy, server_runner: BaseServerRunnerStrategy):
+        self._benchmark_runner = benchmark_runner
+        self._server_runner = server_runner
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._runner.report()
+        self._benchmark_runner.report()
 
     def benchmark(self, *args, **kwargs):
-        with self._runner as strategy:
-            strategy.run(*args, **kwargs)
+        with self._server_runner as server:
+            server.run(*args, **kwargs)
+            with self._benchmark_runner as strategy:
+                strategy.run(*args, **kwargs)
 
     def report(self, *args, **kwargs):
-        return self._runner.report(*args, **kwargs)
+        return self._benchmark_runner.report(*args, **kwargs)
 
     @classmethod
-    def strategy(cls, strategy: str, *args, **kwargs):
-        return cls(get_runner(strategy, *args, **kwargs))
+    def strategy(cls, benchmark_strategy: str, server_strategy: str, *args, **kwargs):
+        return cls(
+            get_runner(benchmark_strategy, *args, **kwargs),
+            get_runner(server_strategy, *args, **kwargs))
 
 
 def get_runner(strategy:str = "ApacheBench", *args, **kwargs):

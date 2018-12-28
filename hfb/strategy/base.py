@@ -87,3 +87,23 @@ class BaseBenchmarkStrategy(_Base, metaclass=ABCMeta):
     @abstractmethod
     def result(self, *args, **kwargs) -> BaseBenchmarkResultStrategy:
         """Implementation required"""
+
+
+class BaseServerRunnerStrategy(_Base, metaclass=ABCMeta):
+    def __enter__(self):
+        try:
+            return self._enter()
+        except AttributeError as e:
+            logger.warning("No valid implementation for _enter method found")
+            raise e
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            self._exit(exc_type, exc_val, exc_tb)
+        except AttributeError as e:
+            logger.warning("No valid implementation for _exit method found")
+            raise e
+
+    @abstractmethod
+    def run(self, *args, **kwargs):
+        """Implementation required"""
