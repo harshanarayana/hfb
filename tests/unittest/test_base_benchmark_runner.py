@@ -1,5 +1,5 @@
 from loguru import logger
-from hfb.base import BaseBenchmarkRunner
+from hfb.strategy.base import BaseBenchmarkStrategy
 from pytest import raises
 import sys
 
@@ -7,22 +7,33 @@ logger.remove(0)
 logger.add(sys.stderr, colorize=True, format="<green>{time:YY:MM:DD HH:MM}</green> <level>{message}</level>")
 
 
+class TestBenchmarkStrategy(BaseBenchmarkStrategy):
+    def run(self, *args, **kwargs):
+        pass
+
+    def report(self, *args, **kwargs):
+        pass
+
+    def result(self, *args, **kwargs):
+        pass
+
+
 class TestBaseBenchmarkRunner:
 
     def test_default_init_with_no_args(self):
         logger.info("Testing default Base class with No Additional Args")
-        base = BaseBenchmarkRunner(server="sanic")
+        base = TestBenchmarkStrategy(server="sanic")
         assert base.server == "sanic"
 
     def test_base_with_additional_param(self):
         logger.info("Testing default base class with Additional arguments")
-        base = BaseBenchmarkRunner(server="sanic", p1="v1", p2=True, p3=BaseBenchmarkRunner)
+        base = TestBenchmarkStrategy(server="sanic", p1="v1", p2=True, p3=BaseBenchmarkStrategy)
         assert getattr(base, "get_p1")
         assert callable(getattr(base, "set_p1"))
 
     def test_base_with_additional_param_get_and_set(self):
         logger.info("Testing dynamically generated getter and setter methods")
-        base = BaseBenchmarkRunner(server="sanic", p1="v1", p2=True, p3=BaseBenchmarkRunner)
+        base = TestBenchmarkStrategy(server="sanic", p1="v1", p2=True, p3=BaseBenchmarkStrategy)
         assert base.get_p1() == "v1"
 
         with raises(expected_exception=TypeError) as e:
@@ -39,15 +50,15 @@ class TestBaseBenchmarkRunner:
         logger.info("Testing Context Manager Methods")
 
         with raises(expected_exception=AttributeError) as e:
-            with BaseBenchmarkRunner(server="test") as runner:
+            with TestBenchmarkStrategy(server="test") as runner:
                 runner.server = "other"
 
-        class ExtentdedBaseWithEnter(BaseBenchmarkRunner):
+        class ExtendedBaseWithEnter(TestBenchmarkStrategy):
             def _enter(self):
                 pass
 
         with raises(expected_exception=AttributeError) as e:
-            with ExtentdedBaseWithEnter(server="test") as s:
+            with ExtendedBaseWithEnter(server="test") as s:
                 s.server = "test"
             assert 1 == 1
 
@@ -58,7 +69,7 @@ class TestBaseBenchmarkRunner:
             "exit": 0
         }
 
-        class WithContext(BaseBenchmarkRunner):
+        class WithContext(TestBenchmarkStrategy):
             def __enter__(self):
                 call_count["enter"] = 1
                 return self
