@@ -1,9 +1,12 @@
 from pytest import raises
 from loguru import logger
 from hfb.runner import get_runner, register_runner, Context
-from hfb.runner.factory import ApacheBench, BaseBenchmarkStrategy
+from hfb.runner.factory import (
+    ApacheBenchRunner as ApacheBench,
+    AbstractFrameworkBenchmarkRunner as BaseBenchmarkStrategy,
+)
 from hfb.strategy import BaseBenchmarkResultStrategy
-from hfb.strategy import BaseServerRunnerStrategy
+from hfb.strategy import AbstractServerRunner as BaseServerRunnerStrategy
 
 
 class CustomStrategy(BaseBenchmarkStrategy):
@@ -29,10 +32,9 @@ class PyRunner(BaseServerRunnerStrategy):
 
 
 class TestRunnerFactory:
-
     def test_get_runner_with_valid_strategy(self):
         logger.info("Testing get_runner with a valid registered strategy")
-        strategy = get_runner("ApacheBench", server="test_server")
+        strategy = get_runner("ApacheBenchRunner", server="test_server")
         assert isinstance(strategy, ApacheBench)
         assert strategy.server == "test_server"
 
@@ -49,7 +51,6 @@ class TestRunnerFactory:
 
 
 class TestContext:
-
     def test_strategy_classmethod(self):
         register_runner(CustomStrategy)
         register_runner(PyRunner)
@@ -64,13 +65,7 @@ class TestContext:
             assert context._benchmark_runner.server == "sanic"
 
     def test_context_runner(self):
-        call_count = {
-            "run": 0,
-            "report": 0,
-            "result": 0,
-            "_enter": 0,
-            "_exit": 0
-        }
+        call_count = {"run": 0, "report": 0, "result": 0, "_enter": 0, "_exit": 0}
 
         class TestStrategy(BaseBenchmarkStrategy):
             def run(self, *args, **kwargs):
@@ -93,7 +88,7 @@ class TestContext:
 
         register_runner(TestStrategy)
 
-        with Context.strategy('TestStrategy', 'PyRunner', server="sanic") as context:
+        with Context.strategy("TestStrategy", "PyRunner", server="sanic") as context:
             context.benchmark()
             context.report()
 

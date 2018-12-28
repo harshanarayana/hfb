@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from loguru import logger
 
 
 class _Base:
@@ -7,6 +6,22 @@ class _Base:
         self._server = server
         self._init_additional_properties(**kwargs)
         self._result = None
+
+    def __enter__(self):
+        try:
+            if hasattr(self, "_pre_enter") and callable(getattr(self, "_pre_enter")):
+                self._pre_enter()
+            return self._enter()
+        except AttributeError as e:
+            raise e
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if hasattr(self, "_pre_exit") and callable(getattr(self, "_pre_exit")):
+                self._pre_exit()
+            self._exit(exc_type, exc_val, exc_tb)
+        except AttributeError as e:
+            raise e
 
     def _init_additional_properties(self, **kwargs):
         for p, v in kwargs.items():
@@ -20,7 +35,9 @@ class _Base:
                 if isinstance(value, prop_type):
                     setattr(self, prop_name, value)
                 else:
-                    raise TypeError("Invalid type {} for property {}".format(type(value), prop_name))
+                    raise TypeError(
+                        "Invalid type {} for property {}".format(type(value), prop_name)
+                    )
             finally:
                 pass
 
@@ -58,56 +75,3 @@ class BaseBenchmarkResultStrategy(_Base, metaclass=ABCMeta):
     @abstractmethod
     def print_stats(self):
         """Implementation Required"""
-
-
-# noinspection PyShadowingNames
-class BaseBenchmarkStrategy(_Base, metaclass=ABCMeta):
-    def __enter__(self):
-        try:
-            return self._enter()
-        except AttributeError as e:
-            logger.warning("No valid implementation for _enter method found")
-            raise e
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            self._exit(exc_type, exc_val, exc_tb)
-        except AttributeError as e:
-            logger.warning("No valid implementation for _exit method found")
-            raise e
-
-    @abstractmethod
-    def run(self, *args, **kwargs):
-        """Implementation required"""
-
-    @abstractmethod
-    def report(self, *args, **kwargs):
-        """Implementation required"""
-
-    @abstractmethod
-    def result(self, *args, **kwargs) -> BaseBenchmarkResultStrategy:
-        """Implementation required"""
-
-
-class BaseServerRunnerStrategy(_Base, metaclass=ABCMeta):
-    def __enter__(self):
-        try:
-            if hasattr(self, '_pre_enter') and callable(getattr(self, '_pre_enter')):
-                self._pre_enter()
-            return self._enter()
-        except AttributeError as e:
-            logger.warning("No valid implementation for _enter method found")
-            raise e
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            if hasattr(self, '_pre_exit') and callable(getattr(self, '_pre_exit')):
-                self._pre_exit()
-            self._exit(exc_type, exc_val, exc_tb)
-        except AttributeError as e:
-            logger.warning("No valid implementation for _exit method found")
-            raise e
-
-    @abstractmethod
-    def run(self, *args, **kwargs):
-        """Implementation required"""

@@ -1,3 +1,4 @@
-from .base import BaseBenchmarkStrategy
-from .base import BaseBenchmarkResultStrategy
-from .base import BaseServerRunnerStrategy
+from hfb.strategy.component import AbstractComponentBenchmarkRunner
+from hfb.strategy.framework import AbstractFrameworkBenchmarkRunner
+from hfb.strategy.server import AbstractServerRunner
+from hfb.strategy.base import BaseBenchmarkResultStrategy
