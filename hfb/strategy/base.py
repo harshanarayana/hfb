@@ -92,6 +92,8 @@ class BaseBenchmarkStrategy(_Base, metaclass=ABCMeta):
 class BaseServerRunnerStrategy(_Base, metaclass=ABCMeta):
     def __enter__(self):
         try:
+            if hasattr(self, '_pre_enter') and callable(getattr(self, '_pre_enter')):
+                self._pre_enter()
             return self._enter()
         except AttributeError as e:
             logger.warning("No valid implementation for _enter method found")
@@ -99,6 +101,8 @@ class BaseServerRunnerStrategy(_Base, metaclass=ABCMeta):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
+            if hasattr(self, '_pre_exit') and callable(getattr(self, '_pre_exit')):
+                self._pre_exit()
             self._exit(exc_type, exc_val, exc_tb)
         except AttributeError as e:
             logger.warning("No valid implementation for _exit method found")
