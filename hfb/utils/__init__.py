@@ -5,7 +5,7 @@ from os import path
 from hfb.strategy import AbstractServerRunner
 
 
-def install_pip_dependency(dependency):
+def install_pip_dependency(dependency): # pragma: no cover
     process = Popen(
         [executable, "-m", "pip", "install", "--upgrade", dependency],
         stdin=PIPE,
