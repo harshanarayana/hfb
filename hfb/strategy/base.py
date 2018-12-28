@@ -6,6 +6,8 @@ class _Base:
         self._server = server
         self._init_additional_properties(**kwargs)
         self._result = None
+        self._config = dict()
+        self._server_process = None
 
     def __enter__(self):
         try:
